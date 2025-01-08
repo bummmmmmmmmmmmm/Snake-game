@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snake Game</title>
+<style>
+body {
+font-family: Arial, sans-serif;
+display: flex;
+justify-content: center;
+align-items: center;
+height: 100vh;
+background-color: #f5f5f5;
+margin: 0;
+flex-direction: column;
+}
+canvas {
+border: 2px solid #000;
+margin-bottom: 20px;
+}
+select {
+font-size: 16px;
+padding: 5px;
+}
+.score {
+position: absolute;
+bottom: 10px;
+left: 10px;
+font-size: 20px;
+font-weight: bold;
+}
+.message {
+font-size: 30px;
+font-weight: bold;
+margin-top: 20px;
+}
+</style>
+</head>
+<body>
+<canvas id="gameCanvas" width="400" height="400"></canvas>
+<select id="colorSelector">
+<option value="green">Green</option>
+<option value="blue">Blue</option>
+<option value="red">Red</option>
+<option value="purple">Purple</option>
+<option value="yellow">Yellow</option>
+</select>
+<select id="foodSelector">
+<option value="apple">Apple</option>
+<option value="banana">Banana</option>
+<option value="grape">Grape</option>
+<option value="orange">Orange</option>
+<option value="coconut">Coconut</option>
+</select>
+<div class="score" id="score">Score: 0</div>
+<div class="message" id="gameMessage"></div>
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const colorSelector = document.getElementById('colorSelector');
+const foodSelector = document.getElementById('foodSelector');
+const scoreElement = document.getElementById('score');
+const gameMessage = document.getElementById('gameMessage');
+const gridSize = 20;
+const canvasSize = 400;
+let snake, direction, food, gameOver, snakeColor, score, foodType;
+// Initialize the game state
+function initializeGame() {
+snake = [{x: 160, y: 160}]; // Start snake with one segment at the center
+direction = 'RIGHT';
+food = generateFood(20); // Generate 20 pieces of food
+gameOver = false;
+snakeColor = colorSelector.value; // Set initial snake color based on dropdown
+foodType = foodSelector.value; // Set initial food type based on dropdown
+score = 0; // Reset score
+scoreElement.textContent =
+`Score: ${score}`
+;
+gameMessage.textContent = ""; // Clear win/loss message
+}
+// Game loop
+function gameLoop() {
+if (gameOver) {
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+ctx.fillStyle = 'black';
+ctx.font = '30px Arial';
+ctx.fillT ext('Game Over'
+, 120, canvas.height / 2);
+ctx.font = '20px Arial';
+ctx.fillT ext('Press Ctrl to Restart'
+, 120, canvas.height / 2 + 40);
+return;
+}
+if (score >= 50) {
+gameOver = true;
+gameMessage.textContent = "You Win! Press Ctrl to Restart";
+return;
+}
+setTimeout(() => {
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+moveSnake();
+drawSnake();
+drawFood();
+checkCollision();
+gameLoop();
+}, 150); // Slowed down the snake movement to 150 ms
+}
+// Move the snake
+function moveSnake() {
+const head = { ...snake[0] };
+if (direction === 'UP') head.y -= gridSize;
+if (direction === 'DOWN') head.y += gridSize;
+if (direction === 'LEFT') head.x -= gridSize;
+if (direction === 'RIGHT') head.x += gridSize;
+snake.unshift(head); // Add new head to the snake
+// Check if the snake eats any food
+for (let i = 0; i < food.length; i++) {
+if (head.x === food[i].x && head.y === food[i].y) {
+food.splice(i, 1); // Remove the eaten food
+food.push(...generateFood(1)); // Add a new piece of food
+score++; // Increase score by 1
+scoreElement.textContent =
+`Score: ${score}`
+return; // Stop the loop once the snake eats food
+; // Update the score on the screen
+}
+}
+snake.pop(); // Remove the last segment if no food is eaten
+}
+// Draw the snake with eyes and dynamic size
+function drawSnake() {
+let segmentSize = gridSize;
+// Decrease the size of each segment as the snake grows
+if (snake.length > 5) {
+segmentSize = Math.max(gridSize - Math.floor(snake.length / 5), 10); // Minimum size is 10
+}
+snake.forEach((segment, index) => {
+ctx.fillStyle = snakeColor; // Use the selected color from dropdown
+ctx.fillRect(segment.x, segment.y, segmentSize, segmentSize);
+if (index === 0) { // Draw eyes on the head
+drawEyes(segment, segmentSize);
+}
+});
+}
+2);
+// Draw eyes on the snake's head
+function drawEyes(head, segmentSize) {
+const eyeSize = segmentSize / 4;
+ctx.fillStyle = 'white';
+if (direction === 'UP') {
+ctx.beginPath();
+ctx.arc(head.x + segmentSize / 4, head.y + segmentSize / 4, eyeSize, 0, Math.PI * 2);
+ctx.arc(head.x + 3 * segmentSize / 4, head.y + segmentSize / 4, eyeSize, 0, Math.PI * 2);
+ctx.fill();
+} else if (direction === 'DOWN') {
+ctx.beginPath();
+ctx.arc(head.x + segmentSize / 4, head.y + 3 * segmentSize / 4, eyeSize, 0, Math.PI * 2);
+ctx.arc(head.x + 3 * segmentSize / 4, head.y + 3 * segmentSize / 4, eyeSize, 0, Math.PI *
+ctx.fill();
+} else if (direction === 'LEFT') {
+ctx.beginPath();
+ctx.arc(head.x + segmentSize / 4, head.y + segmentSize / 4, eyeSize, 0, Math.PI * 2);
+ctx.arc(head.x + segmentSize / 4, head.y + 3 * segmentSize / 4, eyeSize, 0, Math.PI * 2);
+ctx.fill();
+} else if (direction === 'RIGHT') {
+2);
+ctx.beginPath();
+ctx.arc(head.x + 3 * segmentSize / 4, head.y + segmentSize / 4, eyeSize, 0, Math.PI * 2);
+ctx.arc(head.x + 3 * segmentSize / 4, head.y + 3 * segmentSize / 4, eyeSize, 0, Math.PI *
+ctx.fill();
+}
+}
+// Generate food at random positions
+function generateFood(count) {
+let foods = [];
+for (let i = 0; i < count; i++) {
+const foodX = Math.floor(Math.random() * (canvasSize / gridSize)) * gridSize;
+const foodY = Math.floor(Math.random() * (canvasSize / gridSize)) * gridSize;
+foods.push({ x: foodX, y: foodY });
+}
+return foods;
+}
+// Draw the food based on selected type
+function drawFood() {
+food.forEach(f => {
+if (foodType === 'apple') {
+drawApple(f);
+} else if (foodType === 'banana') {
+drawBanana(f);
+} else if (foodType === 'grape') {
+drawGrape(f);
+} else if (foodType === 'orange') {
+drawOrange(f);
+} else if (foodType === 'coconut') {
+drawCoconut(f);
+}
+});
+}
+function drawApple(f) {
+ctx.fillStyle = 'red';
+ctx.beginPath();
+ctx.arc(f.x + gridSize / 2, f.y + gridSize / 2, gridSize / 2, 0, Math.PI * 2);
+ctx.fill();
+ctx.fillStyle = 'green';
+ctx.fillRect(f.x + gridSize / 2 - 2, f.y - 5, 4, 8);
+}
+function drawBanana(f) {
+ctx.fillStyle = 'yellow';
+ctx.beginPath();
+ctx.fill();
+ctx.ellipse(f.x + gridSize / 2, f.y + gridSize / 2, gridSize / 2, gridSize / 3, 0, 0, Math.PI * 2);
+}
+function drawGrape(f) {
+ctx.fillStyle = 'purple';
+ctx.beginPath();
+ctx.arc(f.x + gridSize / 2, f.y + gridSize / 2, gridSize / 2, 0, Math.PI * 2);
+ctx.fill();
+}
+function drawOrange(f) {
+ctx.fillStyle = 'orange';
+ctx.beginPath();
+ctx.arc(f.x + gridSize / 2, f.y + gridSize / 2, gridSize / 2, 0, Math.PI * 2);
+ctx.fill();
+}
+function drawCoconut(f) {
+ctx.fillStyle = 'brown';
+ctx.beginPath();
+ctx.arc(f.x + gridSize / 2, f.y + gridSize / 2, gridSize / 2, 0, Math.PI * 2);
+ctx.fill();
+}
+// Check for collisions
+function checkCollision() {
+const head = snake[0];
+// Check wall collisions
+if (head.x < 0 || head.x >= canvasSize || head.y < 0 || head.y >= canvasSize) {
+gameOver = true;
+}
+// Check self-collision
+for (let i = 1; i < snake.length; i++) {
+if (snake[i].x === head.x && snake[i].y === head.y) {
+gameOver = true;
+}
+}
+}
+// Handle keyboard input for snake movement
+document.addEventListener('keydown'
+, (event) => {
+if (event.key === 'ArrowUp' && direction !== 'DOWN') direction = 'UP';
+if (event.key === 'ArrowDown' && direction !== 'UP') direction = 'DOWN';
+if (event.key === 'ArrowLeft' && direction !== 'RIGHT') direction = 'LEFT';
+if (event.key === 'ArrowRight' && direction !== 'LEFT') direction = 'RIGHT';
+// Restart game if Ctrl is pressed after game over
+if (event.key === 'Control' && gameOver) {
+initializeGame();
+gameLoop();
+}
+});
+// Start the game
+initializeGame();
+gameLoop();
+</script>
+</body>
+</html>
